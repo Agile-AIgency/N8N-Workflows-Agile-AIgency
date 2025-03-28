@@ -1,0 +1,252 @@
+{
+  "name": "PM - Generate jira story configuration",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "id": "4032db6f-a55a-4529-a5f0-8133a14f05f9",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1580,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PM_Get_Product_Overview_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Get Product Overview"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "Do it"
+          ],
+          "schema": [
+            {
+              "id": "Do it",
+              "displayName": "Do it",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "a15da090-d12b-4c9f-9044-1305aed2462e",
+      "name": "Get Project Overview",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1340,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PM_Get_Jira_Stories_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Get Jira Stories"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "3249546a-f3b7-4381-9191-c206e8119716",
+      "name": "Get Jira Stories",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1060,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a highly experienced product manager with deep experience in building SaaS products, adhering to Agile best practices, and crafting comprehensive, clear, and highly effective Jira stories for your engineering teams.\n\n## Objective\nCreate a well structured Jira story that aligns with product management, Agile, and Jira best practices given the `Product Overview` our `Issue Request`, as well as our `Current Jira Stories` below. Use Jira's wikimarkup syntax for the description field. Format the output as a JSON object with the following fields:\n\n---\nJSON output format:\n{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"]\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\"\n}\n---\n\n## Product Overview: \n\n{{ $('Get Project Overview').item.json.content }}\n\n---\n\n## Issue Request:\n\n{{ $('When Executed by Another Workflow').item.json.query }}\n\n---\n\n## References\n\n### Current Jira Stories:\n{{ $json['Jira Ticket'] }}",
+        "hasOutputParser": true
+      },
+      "id": "7aa4e9a3-2024-487b-acfb-27f0b18ce3e0",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -800,
+        -700
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ea5b050b-1a3a-4623-a975-9b0089ee2512",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -780,
+        -480
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"]\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\"\n}"
+      },
+      "id": "f196884d-63dd-4f82-8a13-be0f74c2def3",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -620,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "jiraTicketType",
+              "name": "Jira Ticket Type",
+              "value": "={{ $json.output.issueType }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketSummary",
+              "name": "Jira Ticket Summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketDescription",
+              "name": "Jira Ticket Description",
+              "value": "={{ $json.output.description }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketLabels",
+              "name": "Jira Ticket Labels",
+              "value": "={{ $json.output.labels }}",
+              "type": "array"
+            },
+            {
+              "id": "jiraTicketFixVersion",
+              "name": "Jira Ticket Fix Version",
+              "value": "={{ $json.output.fixVersion }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketEpicId",
+              "name": "Jira Ticket Epic Id",
+              "value": "={{ $json.output.epicId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bd8ede98-e32b-4579-b355-930bc2975215",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -420,
+        -700
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Project Overview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Overview": {
+      "main": [
+        [
+          {
+            "node": "Get Jira Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jira Stories": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bb404823-7e66-4a5e-9ba7-77dc04aee754",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "rBcvIvttAE5VbUrn",
+  "tags": []
+}

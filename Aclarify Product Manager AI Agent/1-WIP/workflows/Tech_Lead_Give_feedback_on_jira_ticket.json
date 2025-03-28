@@ -1,0 +1,254 @@
+{
+  "name": "Tech Lead - Give feedback on jira ticket",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n \"Jira Ticket Type\": \"Story\", \n \"Jira Ticket Summary\": \"TestRail Setup: Configure TestRail as our test management tool\",\n \"Jira Ticket Description\": \"## User Story\\n\\nAs a quality engineer, I want TestRail configured and integrated with our development workflow, so our team can efficiently manage and execute test cases.\\n\\n## Context\\n\\n* TestRail is a widely-used test management tool that integrates well with Jira\\n* It provides features for test case management, test execution tracking, and reporting\\n* Having a dedicated test management tool will help standardize our QA processes\\n\\n## Acceptance Criteria\\n\\n* TestRail instance is set up and configured\\n* TestRail is integrated with our Jira instance\\n* Test suites are created to match our key product areas\\n* Sample test cases are created to validate the setup\\n* Documentation is created explaining how to:\\n - Create and manage test cases\\n - Execute test runs\\n - View and generate reports\\n - Link test cases to Jira issues\\n* Team members are provided access with appropriate roles\\n* Knowledge transfer session is conducted for the team\\n\\n## Resources\\n\\n* TestRail documentation: https://www.gurock.com/testrail/docs/\\n* Jira integration guide: https://www.gurock.com/testrail/docs/integrate/jira/\",\n \"Jira Ticket Labels\": [\n \"Quality_Assurance\",\n \"Groomed\",\n \"Confidence_High\",\n \"V0.0.1\"\n ],\n \"Jira Ticket Fix Version\": \"V0.0.1\",\n \"Jira Ticket Epic Id\": \"AAD-417\"\n }"
+      },
+      "id": "26020b14-c87a-4e4c-b782-bd756f2bc681",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1580,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Tech_Lead_Get_Technical_Docs_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "Tech Lead - Get Technical Documentation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "3ba412c0-f8d2-4d77-a72f-317284f1bfeb",
+      "name": "Get Technical Documentation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1360,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Tech_Lead_Get_Standards_Docs_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "Tech Lead - Get Technical Standards Docs"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "6be83f9f-0ad2-4aa5-82b3-f2385e4d09b6",
+      "name": "Get Technical Standards",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1020,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PM_Get_Jira_Stories_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Get Jira Stories"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "2b23e22c-e8c2-4166-b282-c1952d81054d",
+      "name": "Get Jira Stories",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -800,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# RULES\nYou are a principal engineer and technical lead for an software engineering team at a company called Agile Agency. Your role is to work with your product manager who has provided the following new Jira ticket, to ensure the ticket is well composed, filled with any relevant technical details about functional and non-functional requirements, and meets what we consider \"Definition of Ready\".\n\nPlease analyze the proposed jira ticket based on the following criteria:\n\n- Is the summary clear and intuitive for the average engineer on the team?\n- Is the description clear, well organized (includes the required \"User Story\" and \"Acceptance Criteria\" sections and optionally a \"Context\", \"References\", and \"Out of Scope\" section) and intuitive for the average engineer on the team?\n- Does the description highlight functional and non-functional requirements?\n- Does the ticket provide all necessary information for a developer to not have follow up questions (re: UX, behavior, business logic, etc.)?\n\nAfter evaluation, output a score between 0 and 1, representing the quality of the proposed jira ticket. Include your long form feedback as well as an estimated time for development given the precedents in our current estimates for Jira Tickets (see \"References\" section below). The final output format should be JSON:\n\n---\n{\n \"score\": [insert score here],\n \"feedback\": \"[Long form feedback]\",\n \"estimateTime\": [estimate time to complete the ticket in seconds based on the your understanding of how long previous similar work has taken by looking at other Jira tickets as well as using your instinct given your many years of software development]\n}\n---\n\n#Jira Ticket to Review:\n\nSummary: {{ $('When Executed by Another Workflow').item.json['Jira Ticket Summary'] }}\nDescription: {{ $('When Executed by Another Workflow').item.json['Jira Ticket Description'] }}\nLabels: {{ $('When Executed by Another Workflow').item.json['Jira Ticket Labels'] }}\nFix Version: {{ $('When Executed by Another Workflow').item.json['Jira Ticket Fix Version'] }}\nEpic Id: {{ $('When Executed by Another Workflow').item.json['Jira Ticket Epic Id'] }}\n===\n\n# References\n\nTechnical Documentation:\n{{ $('Get Technical Documentation').item.json.content }}\n\nTechnical Standards:\n{{ $('Get Technical Standards').item.json.content }}\n\nCurrent Jira Tickets with Estimates:\n{{ $('Get Jira Stories').item.json['Jira Ticket'] }}",
+        "hasOutputParser": true
+      },
+      "id": "b8318fe9-063c-4f92-aa40-2aea70d16da3",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -480,
+        -720
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d8e4dd54-6d00-48d1-9a74-96f0243fbd21",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -460,
+        -500
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n \"score\": 0.75,\n \"feedback\": \"Some form of feedback\",\n \"estimateTime\": 7200\n}"
+      },
+      "id": "5ecbdc82-9029-4106-b0c4-24adcb38f516",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -300,
+        -500
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "score",
+              "name": "Score",
+              "value": "={{ $json.output.score }}",
+              "type": "number"
+            },
+            {
+              "id": "feedback",
+              "name": "Feedback",
+              "value": "={{ $json.output.feedback }}",
+              "type": "string"
+            },
+            {
+              "id": "estimatedTime",
+              "name": "estimatedTime",
+              "value": "={{ $json.output.estimateTime }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d1af725c-2d40-483a-8eca-e90b31cbd96c",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -120,
+        -720
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Technical Documentation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Technical Documentation": {
+      "main": [
+        [
+          {
+            "node": "Get Technical Standards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Technical Standards": {
+      "main": [
+        [
+          {
+            "node": "Get Jira Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jira Stories": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7adb6b2a-bd32-4be4-b025-dc234a519229",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "YZIHAJPwPBceOpkl",
+  "tags": []
+}

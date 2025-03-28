@@ -1,0 +1,246 @@
+{
+  "name": "PM - Get Jira Stories",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "f1bd9463-f619-4b3e-8836-e5f000f1d216",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -920,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "jql": "project = \"AAD\" AND statusCategory != Done"
+        }
+      },
+      "id": "51a07845-93bb-4e16-a407-29a734536c4a",
+      "name": "Jira Software",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "issueId",
+              "name": "Issue Id",
+              "value": "={{ $json.key }}",
+              "type": "string"
+            },
+            {
+              "id": "issueType",
+              "name": "Issue Type",
+              "value": "={{ $json.fields.issuetype.name }}",
+              "type": "string"
+            },
+            {
+              "id": "epicId",
+              "name": "Epic Id",
+              "value": "={{ $json.fields.parent ? $json.fields.parent.key : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "issueSummary",
+              "name": "Issue Summary",
+              "value": "={{ $json.fields.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "issueStatus",
+              "name": "Issue Status",
+              "value": "={{ $json.fields.status.name }}",
+              "type": "string"
+            },
+            {
+              "id": "issuePriority",
+              "name": "Issue Priority",
+              "value": "={{ $json.fields.priority ? $json.fields.priority.name : 'None' }}",
+              "type": "string"
+            },
+            {
+              "id": "issueDescription",
+              "name": "Issue Description",
+              "value": "={{ $json.fields.description }}",
+              "type": "string"
+            },
+            {
+              "id": "issueFixVersion",
+              "name": "Issue Fix Version",
+              "value": "={{ $json.fields.fixVersions && $json.fields.fixVersions.length > 0 ? $json.fields.fixVersions[0].name : 'None' }}",
+              "type": "string"
+            },
+            {
+              "id": "issueLabels",
+              "name": "Issue Labels",
+              "value": "={{ $json.fields.labels }}",
+              "type": "string"
+            },
+            {
+              "id": "originalEstimate",
+              "name": "Original Estimate",
+              "value": "={{ $json.fields.timeoriginalestimate }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31eb5607-b853-40dd-a6e5-5a8b23bbc60a",
+      "name": "Pull desired fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "jiraTicket",
+              "name": "Jira Ticket",
+              "value": "=---\nIssue Id: {{ $json['Issue Id'] }}\nIssue Type: {{ $json['Issue Type'] }}\nEpic Id: {{ $json['Epic Id'] }}\nSummary: {{ $json['Issue Summary'] }}\nDescription: {{ $json['Issue Description'] }}\nStatus: {{ $json['Issue Status'] }}\nPriority: {{ $json['Issue Priority'] }}\nFix Version: {{ $json['Issue Fix Version'] }}\nLabels: {{ $json['Issue Labels'] }}\nOriginal Estimate:{{ $json['Original Estimate'] }}\n---",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dc9852cd-17ae-4c11-8ac7-e3c72b2f4562",
+      "name": "Construct jira text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -260,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "Jira Ticket"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "005f5309-294b-4a9a-a328-1ed573a95b87",
+      "name": "Aggregate all ticket jira text",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "jiraTicket",
+              "name": "Jira Ticket",
+              "value": "={{ $json['Jira Ticket'].join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3b6d64a8-7d9f-4ac2-b3a4-10cb5b9dadb9",
+      "name": "Create one single jira text string",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        180,
+        -100
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Jira Software",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Software": {
+      "main": [
+        [
+          {
+            "node": "Pull desired fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull desired fields": {
+      "main": [
+        [
+          {
+            "node": "Construct jira text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct jira text": {
+      "main": [
+        [
+          {
+            "node": "Aggregate all ticket jira text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate all ticket jira text": {
+      "main": [
+        [
+          {
+            "node": "Create one single jira text string",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ce5345ad-7d14-4e52-953d-cb8b33a039c2",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "TEB2I2T1KZMUi2Up",
+  "tags": []
+}

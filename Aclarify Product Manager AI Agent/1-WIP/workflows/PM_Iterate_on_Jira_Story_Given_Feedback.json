@@ -1,0 +1,253 @@
+{
+  "name": "PM - Iterate on Jira Story Given Feedback",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n \"Previous Jira Ticket\": {\n \"Jira Ticket Summary\": \"TestRail Setup: Configure TestRail as test management tool\",\n \"Jira Ticket Description\": \"## User Story\\n\\nAs a quality engineer, I want TestRail configured and integrated with our development workflow, so our team can effectively manage and execute test cases.\\n\\n## Context\\n\\n* TestRail is a widely used test case management tool that integrates well with Jira\\n* We need a centralized place to store and execute test cases\\n* Previous story WEN-630 called for selecting a test management tool\\n\\n## Acceptance Criteria\\n\\n* TestRail instance is set up and accessible to the team\\n* TestRail is integrated with our Jira instance\\n* Test case template/structure is defined in TestRail\\n* Initial test suites are created matching our product structure\\n* Documentation exists in Dev-Docs on how to:\\n * Create test cases\\n * Execute test runs\\n * View reports\\n* Team members have appropriate access levels configured\\n* TestRail API access is configured for potential automation integration\\n\\n## Resources\\n\\n* [TestRail Documentation](https://www.gurock.com/testrail/docs/)\\n* [TestRail-Jira Integration Guide](https://www.gurock.com/testrail/docs/integrate/tools/jira/)\",\n \"Jira Ticket Labels\": [\n \"Quality_Assurance\",\n \"Groomed\",\n \"V0.0.1\"\n ],\n \"Jira Ticket Fix Version\": \"V0.0.1\",\n \"Jira Ticket Epic Id\": \"AAD-417\"\n },\n \"Tech Lead Feedback\": {\n \"Score\": 0.7,\n \"Feedback\": \"The ticket is fairly well structured but has some areas for improvement.\",\n \"estimatedTime\": 21600\n }\n}"
+      },
+      "id": "de68e725-6de0-479c-8021-82c8993c9461",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1600,
+        -780
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Get_Project_Overview_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Get Product Overview"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "Do it"
+          ],
+          "schema": [
+            {
+              "id": "Do it",
+              "displayName": "Do it",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "f57298d6-2fd5-425f-a3e1-43c493941231",
+      "name": "Get Project Overview",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1360,
+        -780
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Get_Jira_Stories_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Get Jira Stories"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "14e136e8-467d-41b2-b7a4-3461102d3da0",
+      "name": "Get Jira Stories",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1080,
+        -780
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a highly experienced product manager with deep experience in building SaaS products, adhering to Agile best practices, and crafting comprehensive, clear, and highly effective Jira stories for your engineering teams. You are working on creating a new Jira Ticket and have received constructive feedback from your tech lead/principal engineer. Given the previous iteration of the Jira Story, your tech lead's feedback, as well as the Product Overview as well as the team's Current Jira Tickets below, please craft an enhanced Jira ticket in the following format:\n\n---\nJSON output format:\n{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"]\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\",\n \"estimatedTime\": <The tech lead's estimated amount of time for completing the ticket in seconds, based on the tech lead's understanding of how long previous similar work has taken by looking at other Jira tickets as well as his instinct given his many years of software development>\n}\n---\n\n## Previous Jira Ticket Iteration:\n\n{{ $('When Executed by Another Workflow').item.json['Previous Jira Ticket'].toJsonString() }}\n\n---\n\n## Tech Lead Feedback:\n\nScore: {{ $('When Executed by Another Workflow').item.json['Tech Lead Feedback'].Score }}\n\nFeedback: {{ $('When Executed by Another Workflow').item.json['Tech Lead Feedback'].Feedback }}\n\nEstimated Time: {{ $('When Executed by Another Workflow').item.json['Tech Lead Feedback'].estimatedTime }} seconds\n\n---\n\n## Product Overview: \n\n{{ $('Get Project Overview').item.json.content }}\n\n---\n\n## Current Jira Tickets:\n\n{{ $json['Jira Ticket'] }}",
+        "hasOutputParser": true
+      },
+      "id": "4784e3fa-8147-48a8-b7ee-9a4af597dfef",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -820,
+        -780
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "545f29a0-e2b5-411c-accd-a1e06816d967",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        -560
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"]\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\",\n \"estimatedTime\": 7200\n}"
+      },
+      "id": "5d366535-f040-4198-a153-11cf1ac2d2f0",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -640,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "jiraTicketType",
+              "name": "Jira Ticket Type",
+              "value": "={{ $json.output.issueType }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketSummary",
+              "name": "Jira Ticket Summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketDescription",
+              "name": "Jira Ticket Description",
+              "value": "={{ $json.output.description }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketLabels",
+              "name": "Jira Ticket Labels",
+              "value": "={{ $json.output.labels }}",
+              "type": "array"
+            },
+            {
+              "id": "jiraTicketFixVersion",
+              "name": "Jira Ticket Fix Version",
+              "value": "={{ $json.output.fixVersion }}",
+              "type": "string"
+            },
+            {
+              "id": "jiraTicketEpicId",
+              "name": "Jira Ticket Epic Id",
+              "value": "={{ $json.output.epicId }}",
+              "type": "string"
+            },
+            {
+              "id": "estimatedTime",
+              "name": "Estimated Time",
+              "value": "={{ $json.output.estimatedTime }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1631c778-cf79-46ec-b75d-6c3e439d1eb9",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -440,
+        -780
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Project Overview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Overview": {
+      "main": [
+        [
+          {
+            "node": "Get Jira Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jira Stories": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4247aaae-e958-4b1a-b41b-d36e0a7c1783",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "01A4YEpU3WioYHsi",
+  "tags": []
+}

@@ -1,0 +1,128 @@
+{
+  "name": "PM - Get Product Overview",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "574385eb-34f6-4703-8799-8c5aac3f50b9",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "operation": "getAll",
+        "blockId": {
+          "__rl": true,
+          "value": "1bf4997a029780ec9f2ac4335838ba5f",
+          "mode": "url"
+        },
+        "returnAll": true
+      },
+      "id": "c8d0ea1f-6e9b-4fcc-9b9f-860837719431",
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -660,
+        -400
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1cd3893-34f6-4336-be87-e760319cd274",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "contentField",
+              "name": "content",
+              "value": "={{ $json.content.join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cc4eb4d7-dfea-4037-aadc-eaa25f475fe3",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -220,
+        -400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "52fc95f5-bc0f-4cd1-a66f-c77be0d3b0a5",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "M3sKOOWDunXFPveI",
+  "tags": []
+}

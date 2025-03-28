@@ -1,0 +1,496 @@
+{
+  "name": "Product Manager - Jira Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Welcome to the Product Manager AI Agent! I can help you create structured Jira tickets following best practices. Just describe the feature or issue you need a ticket for, and I'll handle the rest.",
+        "options": {
+          "allowFileUploads": false,
+          "responseMode": "lastNode",
+          "subtitle": "Create well-structured Jira tickets with tech lead feedback",
+          "title": "Product Manager AI Assistant"
+        }
+      },
+      "id": "3a568c70-d52b-4a2d-8069-1b616d27c8b4",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1220,
+        -160
+      ],
+      "webhookId": "product-manager-jira-agent"
+    },
+    {
+      "parameters": {
+        "agent": "openAiFunctionsAgent",
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a highly experienced product manager with deep experience in building SaaS products, adhering to Agile best practices, and crafting comprehensive, clear, and highly effective Jira stories for your engineering teams. Your job is to create a Jira ticket given the issue request below work with your TechLead to refine it until it is high enough quality to meet the standard \"Definition of Ready\". Use the below steps to create and refine the desired jira ticket:\n\n1. Always start by generating an initial Jira ticket by using the `Get_Initial_Jira_Ticket` tool.\n\n2. Once an initial jira ticket has been generated in Step 1, provide it to your tech lead for a score, detailed feedback, and a time estimate for the jira ticket by using the `Get_Tech_Lead_Feedback` tool.\n\n3. If the score is below 0.8, use the feedback from step 2 to refine the post, by calling the `Refine_Jira_Ticket` tool.\n\n5. The final output should be the polished final Jira Ticket following this JSON format:\n\n---\n{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"]\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\",\n \"estimatedTime\": 7200\n}\n---"
+        }
+      },
+      "id": "426ab46e-657a-4447-9cf4-58952d8acb05",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -980,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}",
+        "tableName": "chat_memory_sessions",
+        "contextWindowLength": 50
+      },
+      "id": "abeb6449-8a14-4524-929f-58b2693d9d9e",
+      "name": "PostgreSQL Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.1,
+      "position": [
+        -1000,
+        140
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Xy62dkOBylsIS6s5",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Get_Initial_Jira_Ticket",
+        "description": "Call this tool to generate a jira ticket object given an issue request or feedback.",
+        "workflowId": {
+          "__rl": true,
+          "value": "PM_Generate_Jira_Story_Config_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Generate jira story configuration"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI(\"query\", \"The issue request from the user\") }}"
+          },
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "f88cbd44-b728-4a7e-bd5e-cce68eafb641",
+      "name": "Get_Initial_Jira_Ticket",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Get_Tech_Lead_Feedback",
+        "description": "Call this tool to get feedback on a jira ticket from your technical lead and principal engineer",
+        "workflowId": {
+          "__rl": true,
+          "value": "Tech_Lead_Feedback_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "Tech Lead - Give feedback on jira ticket"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Jira Ticket Summary": "={{ $fromAI('Jira_Ticket_Summary', \"The Jira Ticket Summary from calling the `Get_Initial_Jira_Ticket` in the form of a `String`\", 'string') }}",
+            "Jira Ticket Description": "={{ $fromAI('Jira_Ticket_Description', \"The Jira Ticket Description from calling the `Get_Initial_Jira_Ticket` in the form of a `String` \", 'string') }}",
+            "Jira Ticket Labels": "={{ $fromAI('Jira_Ticket_Labels', \"The Jira Ticket Labels from calling the `Get_Initial_Jira_Ticket` in the form of an `Array of Strings`\", 'string') }}",
+            "Jira Ticket Fix Version": "={{ $fromAI('Jira_Ticket_Fix_Version', \"The Jira Ticket Fix Version from calling the `Get_Initial_Jira_Ticket` in the form of a `String` \", 'string') }}",
+            "Jira Ticket Epic Id": "={{ $fromAI('Jira_Ticket_Epic_Id', \"The Jira Ticket Epic Id from calling the `Get_Initial_Jira_Ticket` in the form of a `String` \", 'string') }}",
+            "Jira Ticket Type": "={{ $fromAI('Jira_Ticket_Type', \"The Jira Ticket Type from calling the `Get_Initial_Jira_Ticket` in the form of a `String`\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "Jira Ticket Type",
+              "displayName": "Jira Ticket Type",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Jira Ticket Summary",
+              "displayName": "Jira Ticket Summary",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Jira Ticket Description",
+              "displayName": "Jira Ticket Description",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Jira Ticket Labels",
+              "displayName": "Jira Ticket Labels",
+              "type": "array",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Jira Ticket Fix Version",
+              "displayName": "Jira Ticket Fix Version",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Jira Ticket Epic Id",
+              "displayName": "Jira Ticket Epic Id",
+              "type": "string",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "dc766a72-4d75-4666-9486-f8c7ce0b306e",
+      "name": "Get_Tech_Lead_Feedback",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -620,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Refine_Jira_Ticket",
+        "description": "Call this tool to refine the Jira ticket based on tech lead feedback",
+        "workflowId": {
+          "__rl": true,
+          "value": "PM_Iterate_On_Jira_Story_WorkflowId",
+          "mode": "list",
+          "cachedResultName": "PM - Iterate on Jira Story Given Feedback"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Previous Jira Ticket": "={{ $fromAI('Previous_Jira_Ticket', \"The Previous Jira Ticket (entire JSON response from calling `Get_Initial_Jira_Ticket`\", 'string') }}",
+            "Tech Lead Feedback": "={{ $fromAI('Tech_Lead_Feedback', \"The score, feedback, and estimatedTime (entire JSON response) from calling `Get_Tech_Lead_Feedback`\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "Previous Jira Ticket",
+              "displayName": "Previous Jira Ticket",
+              "type": "object",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tech Lead Feedback",
+              "displayName": "Tech Lead Feedback",
+              "type": "object",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "900e6419-c7b9-4ce2-83b1-2ccb446c64b7",
+      "name": "Refine_Jira_Ticket",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n \"issueType\": \"<Story, Bug, Task, Epic>\",\n \"summary\": \"<Feature Name>: <Concise summary for given the feature prompt>\",\n \"description\": \"h2. User Story\\n\\nAs a <persona type>, I want <something to exist, be done, etc>, so <I or someone related to me can benefit in XYZ way>.\\n\\nh2. Context\\n\\n* <Some contextual information 1>\\n* <Some contextual information 2>\\n* <Some contextual information 3>\\n\\nh2. Acceptance Criteria\\n\\n* <Acceptance criteria bullet point 1 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 2 (functional and/or non-functional requirement)>\\n* <Acceptance criteria bullet point 3 (functional and/or non-functional requirement)>\\n\\nh2. Resources\\n\\n* <Any relevant resource 1>\\n* <Any relevant resource 2>\",\n \"labels\": [\"<new or pre-existing label 1 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\", \"<new or pre-existing label 2 (eg. 'API', 'UI', 'QA', 'Storybook', 'V0.0.1', 'Future_Release')\"],\n \"fixVersion\": \"<Either our current fixVersion, 'V0.0.1', or our future next release, 'V0.0.2'>\",\n \"epicId\": \"<If a pre-existing suitable epic exists from our pre-existing Jira Stories, then use its id here>\",\n \"estimatedTime\": 7200\n}"
+      },
+      "id": "c0bf4e94-d3a2-4ad5-a618-d7a5c61b6640",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get the input data\nconst aiOutput = $input.item.json.output;\n\ntry {\n  // Validate required fields\n  if (!aiOutput || !aiOutput.summary || !aiOutput.description) {\n    throw new Error('Missing required fields in AI output');\n  }\n\n  // Return the data object for the next node\n  return {\n    json: {\n      fields: {\n        summary: aiOutput.summary,\n        description: aiOutput.description,\n        labels: (aiOutput.labels || []).concat([\"Created_By_N8N\", \"Needs_Grooming\"]),\n        fixVersions: [{ name: aiOutput.fixVersion || \"V0.0.1\" }],\n        issuetype: {\n          name: aiOutput.issueType || \"Story\",\n        },\n        project: {\n          key: \"AAD\",\n        },\n        parent: aiOutput.epicId ? {\n          key: aiOutput.epicId,\n        } : undefined,\n      },\n      original: aiOutput\n    }\n  };\n} catch (error) {\n  console.error('Error processing Jira ticket data:', error);\n  return {\n    json: {\n      error: 'Failed to prepare Jira ticket data',\n      details: error.message,\n      original: aiOutput\n    }\n  };\n}"
+      },
+      "id": "f456a2e6-3325-4290-b654-72c18de38d0f",
+      "name": "Prepare Jira Ticket Object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Note\nFor now we are not adding an original estimate to the Jira ticket as these appear fairly flawed for the time being",
+        "height": 200,
+        "width": 400
+      },
+      "id": "b947a40b-d0f0-484d-b3e4-0f28691eb9f9",
+      "name": "Estimate Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Product Manager AI Agent\nThis workflow creates well-structured Jira tickets using sub-workflows as tools attached to the AI Agent:\n\n1. Get_Initial_Jira_Ticket - Generates a first draft\n2. Get_Tech_Lead_Feedback - Simulates technical review\n3. Refine_Jira_Ticket - Improves ticket based on feedback\n\nThe sub-workflows handle retrieving context from Notion and Jira.",
+        "height": 240,
+        "width": 600,
+        "color": 5
+      },
+      "id": "412c9c81-95fd-4bc6-8e4b-9e2bcb6f8619",
+      "name": "Workflow Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://agileaigency.atlassian.net/rest/api/2/issue",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {{ $json.fields.toJsonString() }}\n}",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "db076291-561d-4b3c-9fff-e4674371ae75",
+      "name": "Create Jira Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -380,
+        -160
+      ],
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "KZvtJGc0qlX1i4WB",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9494a04b-0c21-424d-a7d3-2aa3c3cb91e7",
+      "name": "Prepare Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1220,
+        140
+      ],
+      "id": "567aba5f-b7b8-4a63-8478-ce6d64fd6866",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xbLcB5usiAFIamKi",
+          "name": "ChatGPT - GJG Personal"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Jira Ticket Object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Initial_Jira_Ticket": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Tech_Lead_Feedback": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refine_Jira_Ticket": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Jira Ticket Object": {
+      "main": [
+        [
+          {
+            "node": "Create Jira Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Jira Ticket": {
+      "main": [
+        [
+          {
+            "node": "Prepare Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "88131bb7-bed5-460a-bc9c-0f810ab47978",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "Mv2thainHM8xmq6L",
+  "tags": []
+}

@@ -1,0 +1,120 @@
+{
+  "name": "Tech Lead - Get Technical Documentation",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "4b11316c-9f1f-454f-8146-6c4ee0539656",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll"
+      },
+      "id": "f138a77a-00f0-48df-b2c5-1c4ca44f7862",
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -580,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "properties.Name.title[0].plain_text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "185e102f-5c66-497b-b00d-d1ff9dadff54",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "contentField",
+              "name": "content",
+              "value": "=Architecture Documentation:\n\n{{ $json['properties.Name.title[0].plain_text'].join('\\n- ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c5c4f448-6a2b-400a-88af-f59329a7648b",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -140,
+        -380
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "badb4215-9f7d-4375-80f0-7c52d6c57519",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "Xp2sCwG0HbQVIO8k",
+  "tags": []
+}

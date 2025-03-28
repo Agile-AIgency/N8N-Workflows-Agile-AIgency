@@ -1,0 +1,120 @@
+{
+  "name": "Tech Lead - Get Technical Standards Docs",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "2bd34c60-46f3-4960-8900-cf437fde74ba",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -860,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll"
+      },
+      "id": "131bc63d-a083-44e9-81b2-297733c0a4bf",
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "properties.Name.title[0].plain_text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7199a22d-bcd6-4dfd-9181-824d5f20c889",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "contentField",
+              "name": "content",
+              "value": "=Engineering Standards:\n\n{{ $json['properties.Name.title[0].plain_text'].join('\\n- ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0ce2c977-bd45-450f-92cb-3666f8ab05f1",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        -440
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "66e37fc5-5146-439c-993e-c5752ffdf643",
+  "meta": {
+    "instanceId": "9d8335875ab348381c62d675e16e5823352fb4160d64babc11d0631a5ec64084"
+  },
+  "id": "Wwndg6XJwbreqou3",
+  "tags": []
+}
